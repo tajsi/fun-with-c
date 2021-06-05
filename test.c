@@ -36,8 +36,16 @@ char * extract_current_token(
         }
         if (!is_opened_quote && (*s == delim))
             break;
-        s++;
-        cnt++;
+        if (!is_opened_quote && (*s == '#')) {
+            while (*s) {
+                *s = '\0';
+                s++;
+            }
+        }
+        else {
+            s++;
+            cnt++;
+        }
     }
 
     if (trim_trailing_ws && cnt) {
@@ -76,7 +84,7 @@ int tokenize(
 
     while (*pos && count < max_tokens) {
         *(buf + count) = extract_current_token(&pos, delim, trim_trailing_ws, accept_quotes);
-        printf("DEBUG: %p - %s\n", buf + count, *(buf + count));
+        // printf("DEBUG: %p - %s\n", buf + count, *(buf + count));
         count++;
     }
 
@@ -91,7 +99,7 @@ int tokenize(
 int main() {
 
     FILE *fd;
-    char buf[BUFFER_SIZE], buf_copy[BUFFER_SIZE], *token_buf, **token_list;
+    char buf[BUFFER_SIZE], /* buf_copy[BUFFER_SIZE], */ *token_buf, **token_list;
     char *text;
     int num_tokens, token_idx;
 
@@ -107,22 +115,22 @@ int main() {
         return 1;
     }
 
-    token_list = &token_buf;
+    token_list = (char **) token_buf;
 
     while ((text = fgets((char *) buf, BUFFER_SIZE, fd)) != NULL) {
-        printf("[%i] - %s", (int) strlen(text), text);
-        strcpy(buf_copy, text);
-        text = buf_copy;
+        printf("[%04i] - %s", (int) strlen(text), text);
+        // strcpy(buf_copy, text);
+        // text = buf_copy;
         num_tokens = tokenize(token_list, text, 0x20, 64, 1, 1);
         if (num_tokens < 0)
             break;
-        token_list = &token_buf;
+        // token_list = &token_buf;
         printf("Found %i tokens\n", num_tokens);
         for (token_idx = 0; token_idx < num_tokens; token_idx++) {
-            printf("DEBUG: %p\n", token_list + token_idx);
+            // printf("DEBUG: %p\n", token_list + token_idx);
             printf("[%02i] - %s\n", token_idx, *(token_list + token_idx));
         }
-        puts("Finished");
+        puts("");
     }
     if (errno != 0) {
         fprintf(stderr, "Error while reading lines: %s\n", strerror(errno));
